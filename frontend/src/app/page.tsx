@@ -17,10 +17,12 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 
 import { getAllConcerts, deleteConcert, createConcert, Concert } from '@/api/concerts';
+import { getAdminUsersReservations } from '@/api/reservations';
 
 export default function AdminDashboard() {
   const [tabIndex, setTabIndex] = useState(0);
   const [concerts, setConcerts] = useState<Concert[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export default function AdminDashboard() {
   // Stats
   const totalSeats = concerts.reduce((acc, curr) => acc + curr.totalSeats, 0);
   const reservedSeats = concerts.reduce((acc, curr) => acc + (curr.totalSeats - curr.availableSeats), 0);
-  const canceledSeats = 12; // Mocked
+  const canceledSeats = reservations.filter(r => r.status === 'CANCELLED').length;
 
   useEffect(() => {
     fetchConcerts();
@@ -47,12 +49,16 @@ export default function AdminDashboard() {
   const fetchConcerts = async () => {
     setLoading(true);
     try {
-      const data = await getAllConcerts();
-      setConcerts(data);
+      const [concertData, reservationData] = await Promise.all([
+        getAllConcerts(),
+        getAdminUsersReservations('user-1')
+      ]);
+      setConcerts(concertData);
+      setReservations(reservationData);
       setError(null);
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch concerts.');
+      setError('Failed to fetch data.');
     } finally {
       setLoading(false);
     }

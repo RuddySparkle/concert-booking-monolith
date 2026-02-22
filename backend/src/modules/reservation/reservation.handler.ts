@@ -20,16 +20,11 @@ export class ReservationHandler {
         return this.reservationService.reserveSeat(userId, dto.concertId);
     }
 
-    async handleCancelSeat(userId: string, reservationId: string): Promise<{ success: boolean; message: string }> {
-        try {
-            await this.reservationService.cancelReservation(reservationId, userId);
-            return { success: true, message: 'Seat cancelled successfully' };
-        } catch (e) {
-            if (e instanceof NotFoundException) {
-                throw new NotFoundException(e.message);
-            }
-            throw new BadRequestException('Failed to cancel seat: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    async handleCancelSeat(userId: string, reservationId: string): Promise<Reservation> {
+        if (!userId || !reservationId) {
+            throw new BadRequestException('userId and reservationId are required');
         }
+        return this.reservationService.cancelReservation(reservationId, userId);
     }
 
     async handleGetUserReservations(userId: string): Promise<Reservation[]> {

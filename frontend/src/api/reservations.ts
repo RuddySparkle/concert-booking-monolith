@@ -4,6 +4,7 @@ export interface Reservation {
     id: string;
     userId: string;
     concertId: string;
+    concertName?: string; // Snapshot of concert name at time of reservation
     status: 'RESERVED' | 'CANCELLED';
     createdAt: string;
 }

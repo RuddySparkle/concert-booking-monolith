@@ -7,7 +7,6 @@ import { getAllConcerts } from '@/api/concerts';
 
 export default function HistoryPage() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
-    const [concertsMap, setConcertsMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -18,17 +17,13 @@ export default function HistoryPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            // Fetch concerts to map names
-            const fetchedConcerts = await getAllConcerts('admin-1');
-            const map: Record<string, string> = {};
-            fetchedConcerts.forEach(c => {
-                map[c.id] = c.name;
-            });
-            setConcertsMap(map);
-
             // Fetch user reservations (since no global endpoint exists, we fetch 'user-1' as mock)
             const userReservations = await getAdminUsersReservations('user-1');
-            setReservations(userReservations);
+            // Sorting is now handled by the backend, but we ensure frontend also sorts correctly
+            const sortedReservations = userReservations.sort((a, b) => 
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            setReservations(sortedReservations);
         } catch (err) {
             console.error(err);
             setError('Failed to fetch history data.');
@@ -79,7 +74,7 @@ export default function HistoryPage() {
                                     <TableRow key={row.id}>
                                         <TableCell>{formatDate(row.createdAt)}</TableCell>
                                         <TableCell>Sara John</TableCell>
-                                        <TableCell>{concertsMap[row.concertId] || 'Unknown Concert'}</TableCell>
+                                        <TableCell>{row.concertName || 'Unknown Concert'}</TableCell>
                                         <TableCell>{row.status === 'RESERVED' ? 'Reserve' : 'Cancel'}</TableCell>
                                     </TableRow>
                                 ))

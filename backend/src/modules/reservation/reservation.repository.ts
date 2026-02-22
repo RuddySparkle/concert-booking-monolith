@@ -5,6 +5,7 @@ export interface Reservation {
     id: string;
     userId: string;
     concertId: string;
+    concertName?: string; // Snapshot of concert name at time of reservation
     status: 'RESERVED' | 'CANCELLED';
     createdAt: Date;
 }
@@ -30,7 +31,9 @@ export class ReservationRepository {
     }
 
     async findByUserId(userId: string): Promise<Reservation[]> {
-        return MockDB.reservations.filter((r) => r.userId === userId);
+        return MockDB.reservations
+            .filter((r) => r.userId === userId)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
     async findByUserIdAndConcertId(userId: string, concertId: string): Promise<Reservation | undefined> {

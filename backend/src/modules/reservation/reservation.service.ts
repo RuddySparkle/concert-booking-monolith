@@ -17,6 +17,9 @@ export class ReservationService {
             throw new BadRequestException('User has already reserved a seat for this concert');
         }
 
+        // Get concert details for snapshot
+        const concert = await this.concertService.getConcertById(concertId);
+
         // Reserve seat in concert
         try {
             await this.concertService.reserveSeat(concertId);
@@ -28,6 +31,7 @@ export class ReservationService {
             id: Date.now().toString(),
             userId,
             concertId,
+            concertName: concert?.name,
             status: 'RESERVED',
             createdAt: new Date(),
         };
@@ -35,7 +39,7 @@ export class ReservationService {
         return this.reservationRepository.create(reservation);
     }
 
-    async cancelReservation(id: string, userId?: string): Promise<void> {
+    async cancelReservation(id: string, userId?: string): Promise<Reservation> {
         const reservation = await this.reservationRepository.findById(id);
         if (!reservation || reservation.status === 'CANCELLED') {
             throw new NotFoundException('Active reservation not found');
@@ -49,8 +53,17 @@ export class ReservationService {
         // Cancel seat in concert
         await this.concertService.cancelSeat(reservation.concertId);
 
-        // Update reservation status
-        await this.reservationRepository.updateStatus(id, 'CANCELLED');
+        // Create a new cancellation log entry instead of updating the existing reservation
+        const cancelLog: Reservation = {
+            id: Date.now().toString(),
+            userId: reservation.userId,
+            concertId: reservation.concertId,
+            concertName: reservation.concertName, // Preserve the concert name snapshot
+            status: 'CANCELLED',
+            createdAt: new Date(),
+        };
+
+        return this.reservationRepository.create(cancelLog);
     }
 
     async getUserReservations(userId: string): Promise<Reservation[]> {

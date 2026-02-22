@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    networks:
+      - concert-net
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Client-side API requests via browser will hit localhost:8080.
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+    depends_on:
+      - backend
+    networks:
+      - concert-net
+
+networks:
+  concert-net:
+    driver: bridge
